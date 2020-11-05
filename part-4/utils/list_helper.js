@@ -1,6 +1,27 @@
-const totalLikes = (blogs) => {
+const _ = require('lodash');
+
+const totalLikes = blogs => {
   return blogs.reduce((sum, current) => sum + current.likes, 0);
 };
+
+const favoriteBlog = blogs => {
+  const mostLikedPost = blogs.filter(b => Math.max(...blogs.map(b => b.likes), 0) === b.likes);
+  return {
+    title: mostLikedPost[0].title,
+    author: mostLikedPost[0].author,
+    likes: mostLikedPost[0].likes,
+  };
+};
+
+const findMostBlogger = blogs => {
+  const result = _.maxBy(blogs, 'author');
+  const arr = blogs.filter(b => b.author === result.author);
+  return {
+    author: result.author,
+    blogs: arr.length
+  };
+};
+
 const blogs = [{
   _id: '5a422a851b54a676234d17f7',
   title: 'React patterns',
@@ -47,5 +68,7 @@ const blogs = [{
 ];
 module.exports = {
   totalLikes,
-  blogs
+  blogs,
+  favoriteBlog,
+  findMostBlogger
 };
