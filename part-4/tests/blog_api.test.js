@@ -20,7 +20,7 @@ const initialBlogPosts = [
   },
 ];
 
-beforeAll(async () => {
+beforeEach(async () => {
   await Blog.deleteMany({});
   let noteObject = new Blog(initialBlogPosts[0]);
   await noteObject.save();
@@ -69,10 +69,40 @@ test('a note should be added with a post method if valid', async () => {
 });
 
 test('if the note was really added to Database', async () => {
+  const newBlog = {
+    title: '03 - This Blog is from Post Method Test',
+    author: 'Test',
+    url: '...',
+    likes: 1000,
+  };
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/);
+
   const allBlogs = await api.get('/api/blogs');
   const titles = allBlogs.body.map(b => b.title);
   expect(titles).toContain('03 - This Blog is from Post Method Test');
 });
+
+test('if likes value is ignored, the it should default to value 0', async () => {
+  const newBlog = {
+    title: '04 -This Blog does NOT have a like property',
+    author: 'no like property author',
+    url: '...',
+  };
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/);
+  const allBlogs = await api.get('/api/blogs');
+  const findABlog = allBlogs.body.find(b => b.title === '04 -This Blog does NOT have a like property');
+  expect(findABlog.likes).toBe(0);
+});
+
 
 afterAll(() => {
   mongoose.connection.close();
