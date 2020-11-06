@@ -33,6 +33,20 @@ blogsRouter.get('/forbidden', function (req, res, next) {
   next(err);
 });
 
+blogsRouter.put('/:id', async (request, response) => {
+  const id = request.params.id;
+  const body = request.body;
+
+  const newBlog = {
+    title: body.title,
+    author: body.author,
+    likes: body.likes,
+  };
+
+  const responseFromMongoose = await Blog.findByIdAndUpdate(id, newBlog, { new: true });
+  response.json(responseFromMongoose);
+});
+
 blogsRouter.delete('/:id', async (request, response) => {
   const getId = request.params.id;
   const user = await Blog.findByIdAndRemove(getId);
