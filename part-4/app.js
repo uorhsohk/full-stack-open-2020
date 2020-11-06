@@ -1,5 +1,6 @@
 const config = require('./utils/config');
 const express = require('express');
+require('express-async-errors');
 const app = express();
 const cors = require('cors');
 const logger = require('./utils/logger');
@@ -20,5 +21,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('build'));
 app.use('/api/blogs', blogsRouter);
+
+app.use((err, req, res, next) => {
+  if (err.message === 'access denied') {
+    res.status(403);
+    res.json({ error: err.message });
+  }
+  if (err.name === 'CastError') {
+    const errorMessage = err.message;
+    return res.json({ 'error': errorMessage });
+  }
+  next(err);
+});
+
 
 module.exports = app;

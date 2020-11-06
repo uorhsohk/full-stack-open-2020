@@ -27,4 +27,20 @@ blogsRouter.post('/', (request, response) => {
     });
 });
 
+blogsRouter.get('/forbidden', function (req, res, next) {
+  let err = new Error('you tried to access /Forbidden');
+  err.statusCode = 403;
+  next(err);
+});
+
+blogsRouter.delete('/:id', async (request, response) => {
+  const getId = request.params.id;
+  const user = await Blog.findByIdAndRemove(getId);
+  if (user !== null) {
+    return response.status(200).json({'message': 'user successfully deleted'});
+  } else {
+    throw Error('No User with ID found!');
+  }
+});
+
 module.exports = blogsRouter;
