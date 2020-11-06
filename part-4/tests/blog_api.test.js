@@ -104,6 +104,21 @@ test('if likes value is ignored, the it should default to value 0', async () => 
 });
 
 
+test('if title is missing, the response should send 400 Bad Request', async () => {
+  const blogWithoutTitle = {
+    author: 'Some Author without title',
+    url: '...',
+  };
+  await api
+    .post('/api/blogs')
+    .send(blogWithoutTitle)
+    .expect(400)
+    .expect('Content-Type', /application\/json/);
+
+  const allBlogs = await api.get('/api/blogs');
+  expect(allBlogs.body).toHaveLength(initialBlogPosts.length);
+});
+
 afterAll(() => {
   mongoose.connection.close();
 });

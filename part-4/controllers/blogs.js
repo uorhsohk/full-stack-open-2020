@@ -16,6 +16,10 @@ blogsRouter.post('/', (request, response) => {
     blog.likes = 0;
   }
 
+  if (blog.title === undefined || blog.url === undefined) {
+    return response.status(400).json({ 'error': 'Bad Request: Title, URL or both is missing from the request' });
+  }
+
   blog
     .save()
     .then(result => {
