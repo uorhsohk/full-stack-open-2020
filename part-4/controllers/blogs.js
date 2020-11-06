@@ -1,30 +1,36 @@
 const blogsRouter = require('express').Router();
 const Blog = require('../models/Blog');
+const User = require('../models/User');
 
-blogsRouter.get('/', (request, response) => {
-  Blog
-    .find({})
-    .then(blogs => {
-      response.json(blogs);
-    });
+blogsRouter.get('/',async (request, response) => {
+  const blogs = await Blog.find({}).populate('user', { name: 1, username: 1 });
+  response.status(200).json(blogs);
 });
 
-blogsRouter.post('/', (request, response) => {
-  const blog = new Blog(request.body);
+blogsRouter.post('/', async (request, response) => {
+  const body = request.body;
 
-  if (blog.likes === undefined) {
-    blog.likes = 0;
-  }
-
-  if (blog.title === undefined || blog.url === undefined) {
+  if (body.title === undefined || body.url === undefined) {
     return response.status(400).json({ 'error': 'Bad Request: Title, URL or both is missing from the request' });
   }
 
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result);
-    });
+  const user = await User.findById(body.userId);
+  console.log('user from user id is: ', user);
+
+  const blogToBeAdded = new Blog({
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    likes: body.likes,
+    user: user._id,
+  });
+
+  const savedBlog = await blogToBeAdded.save();
+  user.blogs = user.blogs.concat(savedBlog._id);
+  await user.save();
+
+  response.json(savedBlog).status(200);
+
 });
 
 blogsRouter.get('/forbidden', function (req, res, next) {

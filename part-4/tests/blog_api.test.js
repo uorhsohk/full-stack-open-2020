@@ -28,7 +28,6 @@ beforeEach(async () => {
   await noteObject.save();
 });
 
-
 test('notes are returned as json', async () => {
   await api
     .get('/api/blogs')
