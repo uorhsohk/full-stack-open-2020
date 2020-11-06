@@ -20,7 +20,7 @@ const initialBlogPosts = [
   },
 ];
 
-beforeEach(async () => {
+beforeAll(async () => {
   await Blog.deleteMany({});
   let noteObject = new Blog(initialBlogPosts[0]);
   await noteObject.save();
@@ -49,6 +49,29 @@ test('the first note is `01 - To Test Blog Post`', async () => {
 test('id property instead of _id', async () => {
   const response = await api.get('/api/blogs');
   expect(response.body[0].id).toBeDefined();
+});
+
+
+test('a note should be added with a post method if valid', async () => {
+  const newBlog = {
+    title: '03 - This Blog is from Post Method Test',
+    author: 'Test',
+    url: '...',
+    likes: 1000,
+  };
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/);
+  const allBlogs = await api.get('/api/blogs');
+  expect(allBlogs.body.length).toBe(initialBlogPosts.length + 1);
+});
+
+test('if the note was really added to Database', async () => {
+  const allBlogs = await api.get('/api/blogs');
+  const titles = allBlogs.body.map(b => b.title);
+  expect(titles).toContain('03 - This Blog is from Post Method Test');
 });
 
 afterAll(() => {
