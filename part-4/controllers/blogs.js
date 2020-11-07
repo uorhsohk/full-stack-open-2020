@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 blogsRouter.get('/',async (request, response) => {
   const blogs = await Blog.find({}).populate('user', { name: 1, username: 1 });
-  response.status(200).json(blogs);
+  response.status(200).json(blogs.map(b => b.toJSON()));
 });
 
 blogsRouter.post('/', async (request, response) => {
@@ -53,15 +53,23 @@ blogsRouter.put('/:id', async (request, response) => {
   response.json(responseFromMongoose);
 });
 
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', async (request, response, next) => {
   const getId = request.params.id;
-  const user = await Blog.findByIdAndRemove(getId);
-
-  if (user !== null) {
-    return response.status(200).json({ 'message': 'user successfully deleted' });
-  } else {
-    throw Error('No User with ID found!');
+  const deletedBlog = await Blog.findById(getId);
+  if (!deletedBlog) {
+    return response.status(404).json({ error: 'Blog Not Found!' });
   }
+  const userWhoCreatedThisBlog = String(deletedBlog.user);
+  const decodedTokenId = jwt.decode(request.token, process.env.JWT_SECRET);
+
+  if (userWhoCreatedThisBlog === decodedTokenId.id) {
+    const successfullyDeleted = await Blog.findByIdAndRemove(getId);
+    if (successfullyDeleted) {
+      return response.status(200).json({ message: deletedBlog });
+    } else {
+      console.log('user of null?!');
+    }
+  } else response.status(404).json({ message: ' YOU ARE NOT THE USER WHO CREATED THIS USER' });
 });
 
 blogsRouter.get('/forbidden', (req, res, next) => {
