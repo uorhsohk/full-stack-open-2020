@@ -1,6 +1,7 @@
 const blogsRouter = require('express').Router();
 const Blog = require('../models/Blog');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
 blogsRouter.get('/',async (request, response) => {
   const blogs = await Blog.find({}).populate('user', { name: 1, username: 1 });
@@ -10,12 +11,18 @@ blogsRouter.get('/',async (request, response) => {
 blogsRouter.post('/', async (request, response) => {
   const body = request.body;
 
+  const token = request.token;
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+  if (!token || !decodedToken.id) {
+    return response.status(401).json({ error: 'token missing or invalid' });
+  }
+
+  const user = await User.findById(decodedToken.id);
+
   if (body.title === undefined || body.url === undefined) {
     return response.status(400).json({ 'error': 'Bad Request: Title, URL or both is missing from the request' });
   }
-
-  const user = await User.findById(body.userId);
-  console.log('user from user id is: ', user);
 
   const blogToBeAdded = new Blog({
     title: body.title,
@@ -30,13 +37,6 @@ blogsRouter.post('/', async (request, response) => {
   await user.save();
 
   response.json(savedBlog).status(200);
-
-});
-
-blogsRouter.get('/forbidden', function (req, res, next) {
-  let err = new Error('you tried to access /Forbidden');
-  err.statusCode = 403;
-  next(err);
 });
 
 blogsRouter.put('/:id', async (request, response) => {
@@ -56,11 +56,16 @@ blogsRouter.put('/:id', async (request, response) => {
 blogsRouter.delete('/:id', async (request, response) => {
   const getId = request.params.id;
   const user = await Blog.findByIdAndRemove(getId);
+
   if (user !== null) {
     return response.status(200).json({ 'message': 'user successfully deleted' });
   } else {
     throw Error('No User with ID found!');
   }
+});
+
+blogsRouter.get('/forbidden', (req, res, next) => {
+  res.status(403).json({ error: 'you are trying to access forbidden page.' });
 });
 
 module.exports = blogsRouter;

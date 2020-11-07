@@ -3,10 +3,17 @@ const express = require('express');
 require('express-async-errors');
 const app = express();
 const cors = require('cors');
+const middleware = require('./utils/middleware');
 const logger = require('./utils/logger');
 const mongoose = require('mongoose');
+
+// set token in request object
+app.use(middleware.tokenExtractor);
+
+// Controllers
 const blogsRouter = require('./controllers/blogs');
 const usersRouter = require('./controllers/users');
+const loginRouter = require('./controllers/login');
 
 logger.info('connecting to', config.MONGODB_URI);
 
@@ -20,26 +27,13 @@ mongoose.connect(config.MONGODB_URI, {
 }).catch(error => logger.error('error connecting to MongoDB'));
 
 app.use(cors());
-app.use(express.json());
 app.use(express.static('build'));
+app.use(express.json());
+app.use(middleware.requestLogger);
 app.use('/api/blogs', blogsRouter);
 app.use('/api/users', usersRouter);
-
-app.use((err, req, res, next) => {
-  if (err.message === 'access denied') {
-    res.status(403);
-    res.json({ error: err.message });
-  }
-  if (err.name === 'CastError') {
-    const errorMessage = err.message;
-    return res.json({ 'error': errorMessage });
-  }
-  if (err.name === 'ValidationError') {
-    const errorMessage = err.message;
-    return res.json({ 'error': errorMessage });
-  }
-  next(err);
-});
-
+app.use('/api/login', loginRouter);
+app.use(middleware.unknownEndpoint);
+app.use(middleware.errorHandler);
 
 module.exports = app;
