@@ -1,3 +1,5 @@
+import getId from "../actions/generateRandomId";
+
 const anecdotesAtStart = [
   'If it hurts, do it more often',
   'Adding manpower to a late software project makes it later!',
@@ -6,28 +8,6 @@ const anecdotesAtStart = [
   'Premature optimization is the root of all evil.',
   'Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.'
 ];
-
-const getId = () => (100000 * Math.random()).toFixed(0);
-
-const createAnecdote = content => {
-  return {
-    type: 'CREATE_ANECDOTE',
-    data: {
-      content,
-      id: getId(),
-      votes: 0
-    }
-  };
-};
-
-const voteHandler = id => {
-  return {
-    type: 'VOTE_HANDLER',
-    data: {
-      id
-    }
-  };
-};
 
 const convertArrayIntoAnObject = anecdote => {
   return {
@@ -39,11 +19,11 @@ const convertArrayIntoAnObject = anecdote => {
 
 const _sortArray = unsortedArray => {
   return unsortedArray.sort((a, b) => b.votes - a.votes);
-}
+};
 
 const initialState = anecdotesAtStart.map(convertArrayIntoAnObject);
 
-const reducer = (state = initialState, action) => {
+const anecdoteReducer = (state = initialState, action) => {
   switch (action.type) {
     case 'CREATE_ANECDOTE':
       return _sortArray([...state, action.data]);
@@ -56,8 +36,4 @@ const reducer = (state = initialState, action) => {
   }
 };
 
-export {
-  createAnecdote,
-  voteHandler,
-  reducer
-};
+export default anecdoteReducer;
